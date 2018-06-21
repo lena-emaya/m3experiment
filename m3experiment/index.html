@@ -25,56 +25,152 @@ mapboxgl.accessToken = 'pk.eyJ1IjoibGVuYWVtYXlhIiwiYSI6ImNpa3VhbXE5ZjAwMXB3eG00a
 
 var map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/lenaemaya/cji37374e1ce02rn0vhms4t7b',
+    style: 'mapbox://styles/lenaemaya/cjiog3lqk0osj2spbg2kd4uei',
     center: [37.672,55.748],
     zoom: 9.5
 });
 
+var randomHsl = function(opacity, random, saturation, lightness) {
+    if (!opacity) opacity = 1;
+    if (!saturation) saturation = 100;
+    if (!lightness) lightness = 50;
+    if (!random) random = Math.random();
+    res = "hsla(" + (random * 360) +
+        ", " + saturation + "% " +
+        ", " + lightness + "% " +
+        ", " + opacity + ")";
+    return res;
+};
+
+
+
+
+
+    var ran = Math.random();
+    var colA = randomHsl(1,ran);
+
 map.on('load', function () {
     map.addSource("routes", {
         "type": "geojson",
-        "data": "./route_trajectories.geojson"
+        
+       "data": "https://raw.githubusercontent.com/lena-emaya/m3experiment/master/m3experiment/route_trajectories.geojson"
     });
 
-    // Add a layer showing the places.
+   
+
+
     map.addLayer({
         "id": "routes",
         "type": "line",
         "source": "routes",
         "paint": {
-            "line-width": 3,
-            "line-color": "#000"
+            "line-width": 1.5,
+            "line-color": "#DF5DE8",
+            "line-opacity": 0
         }
     });
 
-    // When a click event occurs on a feature in the places layer, open a popup at the
-    // location of the feature, with description HTML from its properties.
-    map.on('click', 'routes', function (e) {
-        var coordinates = e.features[0].geometry.coordinates.slice();
-        //var description = e.features[0].properties.description;
 
-        // Ensure that if the map is zoomed out such that multiple
-        // copies of the feature are visible, the popup appears
-        // over the copy being pointed to.
-        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-        }
-
-        // new mapboxgl.Popup()
-        //     .setLngLat(coordinates)
-        //     .setHTML(description)
-        //     .addTo(map);
+    map.addLayer({
+        "id": "routes-light",
+        "type": "line",
+        "source": "routes",
+        "paint": {
+            "line-width": 1.5,
+            "line-color": 
+  "hsl(233, 93%, 54%)",
+  
+            
+            "line-offset": [
+                "interpolate",["linear"],["get", "number"],
+                    1,
+                    11,
+                    15,
+                    24,
+                    40,
+                    6,
+                    100,
+                    0
+            ]   
+        },
+        "filter": ["in", "route_muid", ""]
     });
 
-    // Change the cursor to a pointer when the mouse is over the places layer.
-    map.on('mouseenter', 'routes', function () {
-        map.getCanvas().style.cursor = 'pointer';
+
+    map.addLayer({
+        "id": "shield",
+        "type": "symbol",
+        "source": "routes",
+        "layout": {
+                "text-field": [
+                    "to-string",
+                    [
+                        "get",
+                        "number"
+                    ]
+                ],
+                "symbol-placement": "line",
+                "text-size": 11,
+                "icon-size": 0.5,
+                "symbol-spacing": 300,
+                "icon-image": "bus_shield",
+                "visibility": "none"
+            },
+            "paint": {
+                "text-color": "hsl(0, 4%, 100%)",
+                "icon-opacity": 1
+            }
     });
 
-    // Change it back to a pointer when it leaves.
-    map.on('mouseleave', 'routes', function () {
-        map.getCanvas().style.cursor = '';
+
+        map.addLayer({
+        "id": "shield-light",
+        "type": "symbol",
+        "source": "routes",
+        "layout": {
+                "text-field": [
+                    "to-string",
+                    [
+                        "get",
+                        "number"
+                    ]
+                ],
+                "symbol-placement": "line",
+                "text-size": 11,
+                "icon-size": 0.5,
+                "symbol-spacing": 300,
+                "icon-image": "bus_shield"
+            },
+            "paint": {
+                "text-color": "hsl(0, 4%, 100%)",
+                "icon-opacity": 1
+            }
     });
+
+ 
+    map.on('click', function(e) {
+        // set bbox as 5px reactangle area around clicked point
+        var bbox = [[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]];
+        var features = map.queryRenderedFeatures(bbox,{ layers: ['routes'] });
+        console.log(features);
+        // Run through the selected features and set a filter
+        // to match features with unique FIPS codes to activate
+        // the `counties-highlighted` layer.
+        var filter = features.reduce(function(memo, feature) {
+            memo.push(feature.properties.route_muid);
+            return memo;
+        }, ['in', 'route_muid']);
+
+
+        var filter2 = features.reduce(function(memo, feature) {
+            memo.push(feature.properties.route_muid);
+            return memo;
+        }, ['in', 'route_muid']);
+
+        map.setFilter("routes-light", filter);
+        map.setFilter("shield-light", filter2);
+    });
+
 });
 </script>
 
