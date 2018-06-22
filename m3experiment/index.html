@@ -46,14 +46,15 @@ var randomHsl = function(opacity, random, saturation, lightness) {
 
 
 
+
+
     var ran = Math.random();
     var colA = randomHsl(1,ran);
 
 map.on('load', function () {
     map.addSource("routes", {
         "type": "geojson",
-        
-       "data": "https://raw.githubusercontent.com/lena-emaya/m3experiment/master/m3experiment/route_trajectories.geojson"
+         "data": "https://raw.githubusercontent.com/lena-emaya/m3experiment/master/m3experiment/route_trajectories.geojson"
     });
 
    
@@ -66,7 +67,7 @@ map.on('load', function () {
         "paint": {
             "line-width": 1.5,
             "line-color": "#DF5DE8",
-            "line-opacity": 0
+            "line-opacity": 1
         }
     });
 
@@ -76,23 +77,59 @@ map.on('load', function () {
         "type": "line",
         "source": "routes",
         "paint": {
-            "line-width": 1.5,
-            "line-color": 
-  "hsl(233, 93%, 54%)",
-  
-            
-            "line-offset": [
-                "interpolate",["linear"],["get", "number"],
+            "line-width": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    10,
                     1,
-                    11,
-                    15,
-                    24,
-                    40,
-                    6,
-                    100,
-                    0
-            ]   
-        },
+                    22,
+                    3.5
+                ],
+            "line-color": '#' + (Math.random().toString(16) + "000000").substring(2,8),
+            //[
+            //     "match",
+            //     ["get", "number"],
+            //     "М7",
+            //     "hsl(0, 84%, 64%)",
+            //     "Т10",
+            //     "hsl(257, 84%, 52%)",
+            //     "М9",
+            //     "hsl(86, 96%, 53%)",
+            //     "М3",
+            //     "hsl(190, 97%, 60%)",
+            //     "М4",
+            //     "hsl(242, 74%, 49%)",
+            //     "255",
+            //     "hsl(0, 86%, 69%)",
+            //     "904",
+            //     "hsl(138, 93%, 26%)",
+            //     "Т25",
+            //     "hsl(230, 56%, 73%)",
+            //     "hsl(311, 86%, 69%)"
+            // ],
+            "line-offset": [
+                "match",
+                ["get", "number"],
+                "М7",
+                2,
+                "Т10",
+                3,
+                "М9",
+                4,
+                "М3",
+                5,
+                "М4",
+                6,
+                "255",
+                7,
+                "904",
+                8,
+                "Т25",
+                1,
+                -1
+                ]
+            },
         "filter": ["in", "route_muid", ""]
     });
 
@@ -123,7 +160,7 @@ map.on('load', function () {
     });
 
 
-        map.addLayer({
+    map.addLayer({
         "id": "shield-light",
         "type": "symbol",
         "source": "routes",
@@ -136,10 +173,40 @@ map.on('load', function () {
                     ]
                 ],
                 "symbol-placement": "line",
-                "text-size": 11,
-                "icon-size": 0.5,
+                "text-size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    10,
+                    8,
+                    22,
+                    11
+                ],
+                "icon-size": 0.65,
+                "icon-text-fit-padding": [0.05,0.05,0.05,0.05],
                 "symbol-spacing": 300,
-                "icon-image": "bus_shield"
+                "icon-image": "bus_shield",
+                "icon-allow-overlap": false,
+                "icon-offset": [
+                    "match",
+                    ["get", "number"],
+                    "М7", ["literal",[2,0]],
+                    "Т10",
+                    ["literal",[3,0]],
+                    "М9",
+                    ["literal",[4,0]],
+                    "М3",
+                    ["literal",[1,0]],
+                    "М4",
+                    ["literal",[6,0]],
+                    "255",
+                    ["literal",[7,0]],
+                    "904",
+                    ["literal",[8,0]],
+                    "Т25",
+                    ["literal",[1,0]],
+                    ["literal",[0,0]]
+                ]
             },
             "paint": {
                 "text-color": "hsl(0, 4%, 100%)",
@@ -148,11 +215,34 @@ map.on('load', function () {
     });
 
  
+//  function setStates(e) {
+//         if (e.sourceId === 'routes' && e.isSourceLoaded) {
+//             map.off('sourcedata', setStates);
+//             data.forEach(function(row) {
+//                 map.setFeatureState({source: 'routes', sourceLayer: 'routes-light', id: row["route_muid"]}, row);
+//             });
+//         }
+//     }
+
+//     if (map.isSourceLoaded('routes')) {
+//         setStates({ sourceId: 'routes', isSourceLoaded: true});
+//     } else {
+//         map.on('sourcedata', setStates);
+//     }
+
+
+
+
+//console.log(colorLine.features);
+
     map.on('click', function(e) {
-        // set bbox as 5px reactangle area around clicked point
+       
         var bbox = [[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]];
         var features = map.queryRenderedFeatures(bbox,{ layers: ['routes'] });
-        console.log(features);
+        console.log(map.queryRenderedFeatures(bbox,{ layers: ['routes-light'] }));
+
+        
+        
         // Run through the selected features and set a filter
         // to match features with unique FIPS codes to activate
         // the `counties-highlighted` layer.
@@ -169,8 +259,41 @@ map.on('load', function () {
 
         map.setFilter("routes-light", filter);
         map.setFilter("shield-light", filter2);
-    });
 
+
+        var randomHsl = function(opacity, random, saturation, lightness) {
+    if (!opacity) opacity = 1;
+    if (!saturation) saturation = 100;
+    if (!lightness) lightness = 50;
+    if (!random) random = Math.random();
+    res = "hsla(" + (random * 360) +
+        ", " + saturation + "% " +
+        ", " + lightness + "% " +
+        ", " + opacity + ")";
+    return res;
+};
+
+
+
+
+
+
+
+    // var ran = Math.random();
+    // var colA = randomHsl(1,ran);
+
+    //     //var colors = ["#DF5DE8", "#75FF4A", "#0000FF"];
+    //     var routes = map.queryRenderedFeatures(e.point,{ layers: ['routes-light'] });
+    //    // console.log(routes[0].properties.route_muid);
+        
+
+  
+    //     for(i = 0; i < routes.length; i++)
+    //         { map.setPaintProperty
+    //             ('routes', "line-color", colA[i]);
+    //     };
+
+    });
 });
 </script>
 
